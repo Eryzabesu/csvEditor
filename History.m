@@ -21,16 +21,30 @@ classdef History < handle
             Object.Data     = cell(capacity, 1);
         end
 
-        function Object = UpdateHistory(Object, dataValue)
-            currentIndex = Object.CurrentIndex + 1;
-            lowerIndex   = max(1, Object.LowerIndex);
+        function Object = Clear(Object, capacity)
+            if (nargin == 1)
+                Object = History(Object.Capacity); % Initialize a new object with the same capacity.
+            else
+                Object = History(capacity); % Use the specified capacity.
+            end
+        end
+
+        function Object = Update(Object, dataValue)
+            previousIndex = Object.CurrentIndex;
+            currentIndex  = Object.CurrentIndex + 1;
+            lowerIndex    = max(1, Object.LowerIndex);
 
             if (currentIndex > Object.Capacity)
                 currentIndex = 1;
-                lowerIndex   = lowerIndex + 1;
             end
 
-            upperIndex  = currentIndex;
+            currentSize = Object.Size;
+            upperIndex  = Object.UpperIndex;
+            if (currentSize == Object.Capacity && upperIndex == previousIndex)
+                lowerIndex = mod(lowerIndex, Object.Capacity) + 1;
+            end
+
+            upperIndex  = currentIndex; % Overwrite upperIndex with new limit.
             currentSize = mod(upperIndex - lowerIndex, Object.Capacity) + 1;
 
             Object.Data{currentIndex} = dataValue;
@@ -40,14 +54,14 @@ classdef History < handle
             Object.Size               = currentSize;
         end
 
-        function success = ShiftBack(Object)
+        function success = Back(Object)
             success = Object.Size > 1 && Object.CurrentIndex ~= Object.LowerIndex;
             if (success)
                 Object.CurrentIndex = mod(Object.CurrentIndex - 2, Object.Capacity) + 1;
             end
         end
 
-        function success = ShiftForward(Object)
+        function success = Forward(Object)
             success = Object.Size > 1 && Object.CurrentIndex ~= Object.UpperIndex;
             if (success)
                 Object.CurrentIndex = mod(Object.CurrentIndex, Object.Capacity) + 1;
